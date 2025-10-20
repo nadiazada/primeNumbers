@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/saralee/Desktop/351/primeNumbers/output/main'
+relocations:     []
+...

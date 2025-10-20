@@ -2,6 +2,9 @@
 #include <thread>
 #include <vector>
 #include <cstdlib> //to convert raw char into number
+#include <algorithm>
+
+static std::vector<std::vector<unsigned int>> threadResults;
 
 // defining a simple struct to hold the thread's number range
 struct Range {
@@ -13,8 +16,10 @@ struct Range {
 //it just runs in each thread and prints a message to confirm threading works
 //later this will handle prime range calculations and file writing
 void worker_function(unsigned int id, unsigned int limit, unsigned int numThreads) {
- std::cout << "Thread " << id << " Ready (limit=" << limit
+    std::cout << "Thread " << id << " Ready (limit=" << limit
               << ", total_threads=" << numThreads << ")\n";
+    auto& out = threadResults[id];
+    (void) out; //suppress unused variable warning!!!
 }
 
 int main(int argc, char* argv[]) {
@@ -56,13 +61,29 @@ int main(int argc, char* argv[]) {
               << " range: " << ranges[i].start
               << "-" << ranges[i].end << "\n";
  }
+// preparing storage for thread results
+    threadResults.clear();
+    threadResults.resize(numThreads);
 
  std::vector<std::thread> threads;
  for (unsigned int i = 0; i < numThreads; ++i) {
         threads.emplace_back(worker_function, i, limit, numThreads);
     }
  
-   for (auto& t : threads) t.join();
+// wait for all threads to complete
+    for (auto& t : threads) t.join();
+// merging results
+   std::vector<unsigned int> merged;
+   size_t totalSize = 0;
+    for (const auto& vec : threadResults) {
+        totalSize += vec.size();
+    }
+    merged.reserve(totalSize);
+    for (const auto& vec : threadResults) {
+        merged.insert(merged.end(), vec.begin(), vec.end());
+    }
+// output total primes found
+std::cout << "Total primes found: " << merged.size() << "\n";
 
  return 0;
 }

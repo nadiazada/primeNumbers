@@ -12,14 +12,31 @@ struct Range {
     unsigned int end;
 };
 
+// helper function to check if a number is prime
+bool isPrime(unsigned int n) {
+    if (n < 2) return false;
+    if (n == 2) return true;
+    if (n % 2 == 0) return false;
+    for (unsigned int i = 3; i * i <= n; i += 2) {
+        if (n % i == 0)
+            return false;
+    }
+    return true;
+}
+
 // worker_stub is a temporary thread function for Task 1
 //it just runs in each thread and prints a message to confirm threading works
 //later this will handle prime range calculations and file writing
-void worker_function(unsigned int id, unsigned int limit, unsigned int numThreads) {
-    std::cout << "Thread " << id << " Ready (limit=" << limit
-              << ", total_threads=" << numThreads << ")\n";
+void worker_function(unsigned int id, Range r) {
     auto& out = threadResults[id];
-    (void) out; //suppress unused variable warning!!!
+    for (unsigned int n = r.start; n <= r.end; ++n) {
+        if (isPrime(n)) {
+            out.push_back(n);
+        }
+    }
+    std::cout << "Thread " << id << " processed range "
+              << r.start << "-" << r.end
+              << " and found " << out.size() << " primes.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -67,7 +84,7 @@ int main(int argc, char* argv[]) {
 
  std::vector<std::thread> threads;
  for (unsigned int i = 0; i < numThreads; ++i) {
-        threads.emplace_back(worker_function, i, limit, numThreads);
+        threads.emplace_back(worker_function, i, ranges[i]);
     }
  
 // wait for all threads to complete
@@ -81,6 +98,14 @@ int main(int argc, char* argv[]) {
     merged.reserve(totalSize);
     for (const auto& vec : threadResults) {
         merged.insert(merged.end(), vec.begin(), vec.end());
+    }
+
+    // sorting the merged results
+    std::sort(merged.begin(), merged.end());
+
+    std::cout << "Prime numbers <= " << limit << ":\n";
+    for (unsigned int prime : merged) {
+        std::cout << prime << " ";
     }
 // output total primes found
 std::cout << "Total primes found: " << merged.size() << "\n";
